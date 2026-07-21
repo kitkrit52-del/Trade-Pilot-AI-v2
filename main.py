@@ -6,17 +6,14 @@ Main Application
 import logging
 import threading
 
-from telegram.ext import (
-    Application,
-    CommandHandler,
-)
+from telegram.ext import Application
 
 from config import BOT_TOKEN
 from web.health import run_health_server
 
 from handlers.start import start_handler
 from handlers.help import help_handler
-from handlers.signal import signal
+from handlers.signal import signal_handler
 
 
 # ======================================
@@ -39,13 +36,7 @@ def register_handlers(app):
 
     app.add_handler(start_handler)
     app.add_handler(help_handler)
-
-    app.add_handler(
-        CommandHandler(
-            "signal",
-            signal
-        )
-    )
+    app.add_handler(signal_handler)
 
     logger.info("Handlers registered.")
 
@@ -57,6 +48,9 @@ def register_handlers(app):
 def main():
 
     logger.info("Starting Trade Pilot AI v2")
+
+    if not BOT_TOKEN:
+        raise ValueError("BOT_TOKEN environment variable is not set.")
 
     app = (
         Application.builder()
@@ -80,4 +74,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
