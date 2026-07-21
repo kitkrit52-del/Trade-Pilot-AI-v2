@@ -1,5 +1,10 @@
+"""
+Trade Pilot AI v2
+Signal Command
+"""
+
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, CommandHandler
 
 from services.market_engine import market_engine
 
@@ -17,29 +22,83 @@ async def signal(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
 
-        data = market_engine.analyze(
+        result = market_engine.analyze(
             symbol=symbol,
             timeframe=timeframe
         )
 
+        market = result["market"]
+        ai = result["ai"]
+        volume = result["volume"]
+        oi = result["open_interest"]
+        cvd = result["cvd"]
+        liquidation = result["liquidation"]
+
         message = (
-            f"📊 Trade Pilot AI v2\n\n"
-            f"💰 {data['symbol']}\n"
-            f"⏰ {data['timeframe']}\n\n"
-            f"Price: {data['price']}\n"
-            f"EMA20: {data['ema20']}\n"
-            f"EMA50: {data['ema50']}\n"
-            f"EMA200: {data['ema200']}\n"
-            f"RSI: {data['rsi']}\n"
-            f"MACD: {data['macd']}\n"
-            f"ATR: {data['atr']}\n"
-            f"ADX: {data['adx']}\n\n"
-            f"⭐ Trade Score: {data['score']}/100"
+            f"📊 <b>Trade Pilot AI v2</b>\n\n"
+
+            f"💰 <b>{market['symbol']}</b>\n"
+            f"⏰ {market['timeframe']}\n\n"
+
+            f"💵 Price: <b>{market['price']}</b>\n\n"
+
+            f"📈 EMA20 : {market['ema20']}\n"
+            f"📈 EMA50 : {market['ema50']}\n"
+            f"📈 EMA200: {market['ema200']}\n\n"
+
+            f"⚡ RSI : {market['rsi']}\n"
+            f"📊 ADX : {market['adx']}\n"
+            f"📉 MACD : {market['macd']}\n"
+            f"📉 Signal : {market['macd_signal']}\n"
+            f"📏 ATR : {market['atr']}\n\n"
+
+            f"📦 Volume : {volume['strength']}\n"
+            f"📊 Volume Ratio : {volume['ratio']}\n\n"
         )
 
-        await update.message.reply_text(message)
+        if oi:
+            message += (
+                f"📈 Open Interest : "
+                f"{oi['open_interest']:,.0f}\n"
+            )
+
+        if cvd:
+            message += (
+                f"📊 CVD : "
+                f"{cvd['direction']}\n"
+            )
+
+        if liquidation:
+            message += (
+                f"⚖️ Long/Short : "
+                f"{liquidation['long_short_ratio']:.2f}\n"
+            )
+
+        message += (
+            f"\n⭐ <b>Trade Score :</b> "
+            f"{ai['score']}/100\n"
+
+            f"🎯 <b>Confidence :</b> "
+            f"{ai['confidence']}%\n\n"
+
+            f"<b>{ai['signal']}</b>\n\n"
+
+            f"🧠 <b>AI Analysis:</b>\n"
+        )
+
+        for reason in ai["reasons"]:
+            message += f"✅ {reason}\n"
+
+        await update.message.reply_html(message)
 
     except Exception as e:
+
         await update.message.reply_text(
-            f"❌ {str(e)}"
+            f"❌ {e}"
         )
+
+
+signal_handler = CommandHandler(
+    "signal",
+    signal
+)
