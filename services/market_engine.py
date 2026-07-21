@@ -13,6 +13,8 @@ from services.open_interest_service import open_interest_service
 from services.cvd_service import cvd_service
 from services.liquidation_service import liquidation_service
 from services.ai_service import ai_service
+from services.trend_service import trend_service
+from services.risk_service import risk_service
 
 logger = logging.getLogger(__name__)
 
@@ -23,43 +25,67 @@ class MarketEngine:
 
         try:
 
-            # Отримання історії
+            # ==========================
+            # Market Data
+            # ==========================
+
             df = binance_service.get_ohlcv(
                 symbol=symbol,
                 timeframe=timeframe,
                 limit=300
             )
 
-            # Індикатори
+            # ==========================
+            # Indicators
+            # ==========================
+
             df = indicator_service.calculate(df)
 
             last = df.iloc[-1]
 
-            # Обсяг
+            # ==========================
+            # Volume
+            # ==========================
+
             volume = volume_service.analyze(df)
 
-            # Score
+            # ==========================
+            # Trade Score
+            # ==========================
+
             score = score_service.calculate(df)
 
+            # ==========================
             # Open Interest
+            # ==========================
+
             try:
                 open_interest = open_interest_service.get_open_interest(symbol)
             except Exception:
                 open_interest = None
 
+            # ==========================
             # CVD
+            # ==========================
+
             try:
                 cvd = cvd_service.calculate(df)
             except Exception:
                 cvd = None
 
+            # ==========================
             # Long / Short Ratio
+            # ==========================
+
             try:
                 liquidation = liquidation_service.get_long_short_ratio(symbol)
             except Exception:
                 liquidation = None
 
-            # Market Data
+            # ==========================
+            # Market Object
+            # ==========================
+
             market = {
 
                 "symbol": symbol,
@@ -81,15 +107,38 @@ class MarketEngine:
                 "adx": round(float(last["ADX"]), 2),
 
                 "score": score
+
             }
 
+            # ==========================
+            # Trend Analysis
+            # ==========================
+
+            trend = trend_service.analyze(market)
+
+            # ==========================
+            # Risk Analysis
+            # ==========================
+
+            risk = risk_service.calculate(
+                market=market,
+                trend=trend
+            )
+
+            # ==========================
             # AI Analysis
+            # ==========================
+
             ai = ai_service.analyze(
                 market=market,
                 open_interest=open_interest,
                 cvd=cvd,
                 liquidation=liquidation
             )
+
+            # ==========================
+            # Final Result
+            # ==========================
 
             return {
 
@@ -102,6 +151,10 @@ class MarketEngine:
                 "cvd": cvd,
 
                 "liquidation": liquidation,
+
+                "trend": trend,
+
+                "risk": risk,
 
                 "ai": ai
 
