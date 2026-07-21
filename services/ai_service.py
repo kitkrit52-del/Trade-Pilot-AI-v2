@@ -25,55 +25,90 @@ class AIService:
 
         reasons = []
 
-        # EMA
+        # ==========================
+        # EMA Analysis
+        # ==========================
+
         if market["ema20"] > market["ema50"] > market["ema200"]:
             reasons.append("EMA підтверджує висхідний тренд")
 
         elif market["ema20"] < market["ema50"] < market["ema200"]:
             reasons.append("EMA підтверджує низхідний тренд")
 
-        # RSI
+        # ==========================
+        # RSI Analysis
+        # ==========================
+
         if market["rsi"] > 55:
             reasons.append("RSI підтримує покупців")
 
         elif market["rsi"] < 45:
             reasons.append("RSI підтримує продавців")
 
-        # ADX
-        if market["adx"] > 25:
-            reasons.append("Сильний тренд (ADX > 25)")
+        # ==========================
+        # ADX Analysis
+        # ==========================
 
-        # MACD
+        if market["adx"] >= 25:
+            reasons.append("Сильний тренд (ADX ≥ 25)")
+
+        # ==========================
+        # MACD Analysis
+        # ==========================
+
         if market["macd"] > market["macd_signal"]:
             reasons.append("MACD Bullish")
 
         else:
             reasons.append("MACD Bearish")
 
+        # ==========================
         # Open Interest
-        if open_interest:
+        # ==========================
+
+        if (
+            open_interest
+            and isinstance(open_interest, dict)
+            and "open_interest" in open_interest
+        ):
             reasons.append(
                 f"Open Interest: {open_interest['open_interest']:.2f}"
             )
 
+        # ==========================
         # CVD
-        if cvd:
+        # ==========================
+
+        if (
+            cvd
+            and isinstance(cvd, dict)
+            and "direction" in cvd
+        ):
             reasons.append(
                 f"CVD: {cvd['direction']}"
             )
 
+        # ==========================
         # Long / Short Ratio
-        if liquidation:
+        # ==========================
 
-            ratio = liquidation["long_short_ratio"]
+        if liquidation and isinstance(liquidation, dict):
+
+            ratio = liquidation.get("long_short_ratio", 1)
 
             if ratio > 1:
                 reasons.append("Перевага LONG-позицій")
 
-            else:
+            elif ratio < 1:
                 reasons.append("Перевага SHORT-позицій")
 
+            else:
+                reasons.append("LONG / SHORT баланс")
+
+        # ==========================
         # Recommendation
+        # ==========================
+
         if score >= 80:
             signal = "🟢 STRONG LONG"
 
@@ -87,6 +122,10 @@ class AIService:
             signal = "🔴 SHORT"
 
         confidence = min(score + 10, 99)
+
+        logger.info(
+            f"AI Signal: {signal} | Score: {score} | Confidence: {confidence}%"
+        )
 
         return {
             "signal": signal,
