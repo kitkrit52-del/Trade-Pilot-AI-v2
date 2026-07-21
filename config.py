@@ -53,3 +53,9 @@ TIMEFRAMES = [
     "4h",
     "1d",
 ]
+
+# ==========================
+# Binance
+# ==========================
+
+BINANCE_DEFAULT_TYPE = "future"
