@@ -1,4 +1,3 @@
-"""
 Trade Pilot AI v2
 Market Engine
 """
