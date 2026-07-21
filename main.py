@@ -40,13 +40,13 @@ def register_handlers(app: Application):
 
     # Example:
     #
-    # from handlers.start import start_handler
-    # app.add_handler(start_handler)
-    #
-    # from handlers.signal import signal_handler
-    # app.add_handler(signal_handler)
+    from handlers.start import start_handler
+    from handlers.help import help_handler
 
-    logger.info("Handlers loaded.")
+    app.add_handler(start_handler)
+    app.add_handler(help_handler)
+
+    logger.info("Handlers registered.")
 
 
 # =====================================
