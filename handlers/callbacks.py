@@ -7,69 +7,123 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from handlers.symbols import symbols_menu
+from handlers.timeframes import timeframe_menu
+from services.market_engine import market_engine
 
 
 async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
-
     await query.answer()
 
     data = query.data
 
     # ==========================
-    # Main Menu
+    # MAIN MENU
     # ==========================
 
     if data == "analysis":
-
         await symbols_menu(update, context)
+        return
 
-    elif data == "ai":
-
+    if data == "ai":
         await query.edit_message_text(
-            "🤖 AI ANALYSIS\n\n"
-            "Модуль AI знаходиться у розробці."
+            "🤖 AI Analysis\n\n"
+            "AI Engine v2.1"
         )
+        return
 
-    elif data == "scanner":
-
+    if data == "scanner":
         await query.edit_message_text(
-            "📈 MARKET SCANNER\n\n"
-            "Сканер буде доданий у версії 2.1."
+            "📈 Market Scanner\n\n"
+            "Скоро..."
         )
+        return
 
-    elif data == "settings":
-
+    if data == "settings":
         await query.edit_message_text(
-            "⚙️ НАЛАШТУВАННЯ\n\n"
-            "Налаштування будуть доступні незабаром."
+            "⚙️ Settings\n\n"
+            "Скоро..."
         )
+        return
 
-    elif data == "help":
-
+    if data == "help":
         await query.edit_message_text(
-            "❓ ДОПОМОГА\n\n"
-            "Trade Pilot AI v2.1\n\n"
-            "Використовуйте меню для аналізу ринку."
+            "❓ Trade Pilot AI v2.1"
         )
+        return
 
     # ==========================
-    # Back
+    # SYMBOL
     # ==========================
 
-    elif data == "main_menu":
+    symbols = [
+        "BTCUSDT",
+        "ETHUSDT",
+        "BNBUSDT",
+        "SOLUSDT",
+        "XRPUSDT",
+        "DOGEUSDT",
+        "TONUSDT",
+        "LINKUSDT",
+        "SUIUSDT",
+        "AVAXUSDT"
+    ]
+
+    if data in symbols:
+        await timeframe_menu(update, context)
+        return
+
+    # ==========================
+    # ANALYZE
+    # ==========================
+
+    if "|" in data:
+
+        symbol, timeframe = data.split("|")
+
+        try:
+
+            result = market_engine.analyze(
+                symbol=symbol,
+                timeframe=timeframe
+            )
+
+            market = result["market"]
+            ai = result["ai"]
+
+            text = (
+                "🚀 <b>Trade Pilot AI v2.1</b>\n\n"
+
+                f"💰 <b>{market['symbol']}</b>\n"
+                f"⏰ {timeframe}\n\n"
+
+                f"💵 Price: {market['price']}\n"
+                f"⭐ Score: {ai['score']}/100\n"
+                f"🎯 Confidence: {ai['confidence']}%\n\n"
+
+                f"🚦 <b>{ai['signal']}</b>"
+            )
+
+            await query.edit_message_text(
+                text,
+                parse_mode="HTML"
+            )
+
+        except Exception as e:
+
+            await query.edit_message_text(
+                f"❌ {e}"
+            )
+
+        return
+
+    # ==========================
+    # BACK
+    # ==========================
+
+    if data == "main_menu":
 
         from handlers.menu import menu
 
         await menu(update, context)
-
-    # ==========================
-    # Unknown
-    # ==========================
-
-    else:
-
-        await query.edit_message_text(
-            "⚠️ Команда поки не реалізована."
-        )
