@@ -1,5 +1,5 @@
 """
-Trade Pilot AI v2
+Trade Pilot AI v2.2
 Risk Service
 """
 
@@ -10,15 +10,20 @@ logger = logging.getLogger(__name__)
 
 class RiskService:
 
-    def calculate(self, market, trend):
+    def calculate(self, market, trend, signal=None):
 
         price = market["price"]
         atr = market["atr"]
 
-        signal = trend["trend"]
+        # якщо сигнал не передали — беремо тренд
+        if signal:
+            direction = signal
+        else:
+            direction = trend["trend"]
+
 
         # LONG
-        if signal == "BULLISH":
+        if "LONG" in direction or direction == "BULLISH":
 
             entry = price
 
@@ -30,8 +35,9 @@ class RiskService:
 
             tp3 = price + (atr * 6)
 
+
         # SHORT
-        elif signal == "BEARISH":
+        elif "SHORT" in direction or direction == "BEARISH":
 
             entry = price
 
@@ -43,23 +49,30 @@ class RiskService:
 
             tp3 = price - (atr * 6)
 
-        # SIDEWAYS
+
+        # WAIT
         else:
 
-            entry = price
+            return {
 
-            stop_loss = price
+                "entry": round(price, 2),
+                "stop_loss": 0,
+                "tp1": 0,
+                "tp2": 0,
+                "tp3": 0,
+                "risk_reward": 0
+            }
 
-            tp1 = price
-
-            tp2 = price
-
-            tp3 = price
 
         risk = abs(entry - stop_loss)
+
         reward = abs(tp2 - entry)
 
-        rr = round(reward / risk, 2) if risk > 0 else 0
+        rr = round(
+            reward / risk,
+            2
+        ) if risk > 0 else 0
+
 
         return {
 
