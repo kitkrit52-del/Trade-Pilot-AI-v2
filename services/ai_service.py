@@ -1,6 +1,6 @@
 """
-Trade Pilot AI v2
-AI Service
+Trade Pilot AI v3
+AI Analyst Service
 """
 
 import logging
@@ -17,121 +17,194 @@ class AIService:
         cvd=None,
         liquidation=None
     ):
-        """
-        AI Recommendation Engine
-        """
 
         score = market["score"]
 
-        reasons = []
+        strengths = []
+        weaknesses = []
+
+        readiness = 0
 
         # ==========================
-        # EMA Analysis
+        # EMA
         # ==========================
 
-        if market["ema20"] > market["ema50"] > market["ema200"]:
-            reasons.append("EMA підтверджує висхідний тренд")
+        bullish = (
+            market["ema20"] >
+            market["ema50"] >
+            market["ema200"]
+        )
 
-        elif market["ema20"] < market["ema50"] < market["ema200"]:
-            reasons.append("EMA підтверджує низхідний тренд")
+        bearish = (
+            market["ema20"] <
+            market["ema50"] <
+            market["ema200"]
+        )
+
+        if bullish:
+            strengths.append("EMA підтверджує висхідний тренд")
+            readiness += 25
+
+        elif bearish:
+            strengths.append("EMA підтверджує низхідний тренд")
+            readiness += 25
+
+        else:
+            weaknesses.append("EMA без чіткої структури")
 
         # ==========================
-        # RSI Analysis
+        # RSI
         # ==========================
 
-        if market["rsi"] > 55:
-            reasons.append("RSI підтримує покупців")
+        rsi = market["rsi"]
 
-        elif market["rsi"] < 45:
-            reasons.append("RSI підтримує продавців")
+        if 55 <= rsi <= 70:
+            strengths.append("RSI підтримує покупців")
+            readiness += 10
+
+        elif 30 <= rsi <= 45:
+            strengths.append("RSI підтримує продавців")
+            readiness += 10
+
+        else:
+            weaknesses.append("RSI нейтральний")
 
         # ==========================
-        # ADX Analysis
+        # ADX
         # ==========================
 
         if market["adx"] >= 25:
-            reasons.append("Сильний тренд (ADX ≥ 25)")
+            strengths.append("Сильний тренд")
+            readiness += 15
+
+        else:
+            weaknesses.append("Слабкий тренд (ADX)")
 
         # ==========================
-        # MACD Analysis
+        # MACD
         # ==========================
 
         if market["macd"] > market["macd_signal"]:
-            reasons.append("MACD Bullish")
+            strengths.append("MACD Bullish")
+            readiness += 15
 
         else:
-            reasons.append("MACD Bearish")
-
-        # ==========================
-        # Open Interest
-        # ==========================
-
-        if (
-            open_interest
-            and isinstance(open_interest, dict)
-            and "open_interest" in open_interest
-        ):
-            reasons.append(
-                f"Open Interest: {open_interest['open_interest']:.2f}"
-            )
+            weaknesses.append("MACD Bearish")
 
         # ==========================
         # CVD
         # ==========================
 
-        if (
-            cvd
-            and isinstance(cvd, dict)
-            and "direction" in cvd
-        ):
-            reasons.append(
-                f"CVD: {cvd['direction']}"
+        if cvd:
+
+            if cvd.get("direction") == "BUYERS":
+                strengths.append("Покупці домінують (CVD)")
+                readiness += 10
+
+            elif cvd.get("direction") == "SELLERS":
+                weaknesses.append("Продавці домінують (CVD)")
+
+        # ==========================
+        # Open Interest
+        # ==========================
+
+        if open_interest:
+
+            strengths.append("Open Interest активний")
+            readiness += 10
+
+        # ==========================
+        # Long / Short
+        # ==========================
+
+        if liquidation:
+
+            ratio = liquidation.get(
+                "long_short_ratio",
+                1
             )
 
-        # ==========================
-        # Long / Short Ratio
-        # ==========================
-
-        if liquidation and isinstance(liquidation, dict):
-
-            ratio = liquidation.get("long_short_ratio", 1)
-
             if ratio > 1:
-                reasons.append("Перевага LONG-позицій")
+                strengths.append("LONG переважає")
+                readiness += 5
 
             elif ratio < 1:
-                reasons.append("Перевага SHORT-позицій")
-
-            else:
-                reasons.append("LONG / SHORT баланс")
+                weaknesses.append("SHORT переважає")
 
         # ==========================
-        # Recommendation
+        # Readiness
         # ==========================
 
-        if score >= 80:
-            signal = "🟢 STRONG LONG"
+        readiness = min(readiness, 100)
 
-        elif score >= 60:
-            signal = "🟢 LONG"
+        # ==========================
+        # Market Bias
+        # ==========================
 
-        elif score >= 40:
-            signal = "🟡 WAIT"
+        if bullish:
+            bias = "🟢 BULLISH"
+
+        elif bearish:
+            bias = "🔴 BEARISH"
 
         else:
-            signal = "🔴 SHORT"
+            bias = "🟡 SIDEWAYS"
 
-        confidence = min(score + 10, 99)
+        # ==========================
+        # Trading Scenario
+        # ==========================
+
+        if readiness >= 80:
+
+            signal = "🟢 READY LONG"
+
+            risk = "LOW"
+
+        elif readiness >= 60:
+
+            signal = "🟡 WAIT CONFIRMATION"
+
+            risk = "MEDIUM"
+
+        else:
+
+            signal = "⚪ NO TRADE"
+
+            risk = "HIGH"
+
+        # ==========================
+        # Summary
+        # ==========================
+
+        summary = (
+            f"Ринок має {bias.lower()} сценарій. "
+            f"Готовність до входу {readiness}%."
+        )
 
         logger.info(
-            f"AI Signal: {signal} | Score: {score} | Confidence: {confidence}%"
+            f"{signal} | Readiness={readiness}"
         )
 
         return {
+
             "signal": signal,
+
             "score": score,
-            "confidence": confidence,
-            "reasons": reasons
+
+            "confidence": readiness,
+
+            "market_bias": bias,
+
+            "risk": risk,
+
+            "strengths": strengths,
+
+            "weaknesses": weaknesses,
+
+            "summary": summary,
+
+            "reasons": strengths
+
         }
 
 
