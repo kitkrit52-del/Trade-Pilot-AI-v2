@@ -1,5 +1,5 @@
 """
-Trade Pilot AI v2
+Trade Pilot AI v2.2
 Market Engine
 """
 
@@ -35,6 +35,7 @@ class MarketEngine:
                 limit=300
             )
 
+
             # ==========================
             # Indicators
             # ==========================
@@ -43,11 +44,13 @@ class MarketEngine:
 
             last = df.iloc[-1]
 
+
             # ==========================
             # Volume
             # ==========================
 
             volume = volume_service.analyze(df)
+
 
             # ==========================
             # Trade Score
@@ -55,14 +58,17 @@ class MarketEngine:
 
             score = score_service.calculate(df)
 
+
             # ==========================
             # Open Interest
             # ==========================
 
             try:
                 open_interest = open_interest_service.get_open_interest(symbol)
+
             except Exception:
                 open_interest = None
+
 
             # ==========================
             # CVD
@@ -70,8 +76,10 @@ class MarketEngine:
 
             try:
                 cvd = cvd_service.calculate(df)
+
             except Exception:
                 cvd = None
+
 
             # ==========================
             # Long / Short Ratio
@@ -79,8 +87,11 @@ class MarketEngine:
 
             try:
                 liquidation = liquidation_service.get_long_short_ratio(symbol)
+
             except Exception:
                 liquidation = None
+
+
 
             # ==========================
             # Market Object
@@ -89,17 +100,21 @@ class MarketEngine:
             market = {
 
                 "symbol": symbol,
+
                 "timeframe": timeframe,
 
                 "price": round(float(last["close"]), 2),
 
                 "ema20": round(float(last["EMA20"]), 2),
+
                 "ema50": round(float(last["EMA50"]), 2),
+
                 "ema200": round(float(last["EMA200"]), 2),
 
                 "rsi": round(float(last["RSI"]), 2),
 
                 "macd": round(float(last["MACD"]), 4),
+
                 "macd_signal": round(float(last["MACD_SIGNAL"]), 4),
 
                 "atr": round(float(last["ATR"]), 2),
@@ -110,31 +125,49 @@ class MarketEngine:
 
             }
 
+
+
             # ==========================
             # Trend Analysis
             # ==========================
 
             trend = trend_service.analyze(market)
 
-            # ==========================
-            # Risk Analysis
-            # ==========================
 
-            risk = risk_service.calculate(
-                market=market,
-                trend=trend
-            )
 
             # ==========================
             # AI Analysis
             # ==========================
 
             ai = ai_service.analyze(
+
                 market=market,
+
                 open_interest=open_interest,
+
                 cvd=cvd,
+
                 liquidation=liquidation
+
             )
+
+
+
+            # ==========================
+            # Risk Analysis v2.2
+            # ==========================
+
+            risk = risk_service.calculate(
+
+                market=market,
+
+                trend=trend,
+
+                signal=ai["signal"]
+
+            )
+
+
 
             # ==========================
             # Final Result
@@ -142,29 +175,43 @@ class MarketEngine:
 
             return {
 
+
                 "market": market,
+
 
                 "volume": volume,
 
+
                 "open_interest": open_interest,
+
 
                 "cvd": cvd,
 
+
                 "liquidation": liquidation,
+
 
                 "trend": trend,
 
+
                 "risk": risk,
+
 
                 "ai": ai
 
             }
 
+
         except Exception as e:
 
-            logger.exception("Market Engine Error")
+            logger.exception(
+                "Market Engine Error"
+            )
 
-            raise Exception(f"Market Engine Error: {e}")
+            raise Exception(
+                f"Market Engine Error: {e}"
+            )
+
 
 
 market_engine = MarketEngine()
