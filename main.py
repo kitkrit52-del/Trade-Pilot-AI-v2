@@ -6,7 +6,10 @@ Main Application
 import logging
 import threading
 
-from telegram.ext import Application
+from telegram.ext import (
+    Application,
+    CallbackQueryHandler,
+)
 
 from config import BOT_TOKEN
 from web.health import run_health_server
@@ -14,6 +17,10 @@ from web.health import run_health_server
 from handlers.start import start_handler
 from handlers.help import help_handler
 from handlers.signal import signal_handler
+from handlers.menu import menu
+from handlers.callbacks import menu_callback
+
+from telegram.ext import CommandHandler
 
 
 # ======================================
@@ -37,6 +44,23 @@ def register_handlers(app):
     app.add_handler(start_handler)
     app.add_handler(help_handler)
     app.add_handler(signal_handler)
+
+    # ==========================
+    # New Menu v2.1
+    # ==========================
+
+    app.add_handler(
+        CommandHandler(
+            "menu",
+            menu
+        )
+    )
+
+    app.add_handler(
+        CallbackQueryHandler(
+            menu_callback
+        )
+    )
 
     logger.info("Handlers registered.")
 
