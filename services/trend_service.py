@@ -60,10 +60,10 @@ class TrendService:
         # RSI Warning
         warning = None
 
-        if rsi > 75:
+        if rsi > 80:
             warning = "Overbought"
 
-        elif rsi < 25:
+        elif rsi < 20:
             warning = "Oversold"
 
         return {
