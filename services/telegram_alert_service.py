@@ -15,21 +15,27 @@ class TelegramAlertService:
         self.user_id = user_id
         self.base_url = f"https://telegram.org{self.bot_token}/sendMessage"
 
-    def is_timeframe_allowed(self, timeframe: str) -> bool:
-        """Перевіряє, чи таймфрейм є 15m або вище."""
-        tf = timeframe.lower().strip()
-        
-        # Якщо таймфрейм у хвилинах (наприклад, 5m, 15m)
-        if 'm' in tf and 'h' not in tf and 'd' not in tf:
-            try:
+        def is_timeframe_allowed(self, timeframe) -> bool:
+        """Покращена перевірка таймфрейму."""
+        try:
+            # Перетворюємо на рядок та нижній регістр (на випадок, якщо прийшло число або об'єкт)
+            tf = str(timeframe).lower().strip()
+            
+            # Якщо передано просто число 5 або 15 (без 'm')
+            if tf.isdigit():
+                return int(tf) >= 15
+
+            # Якщо це хвилинний таймфрейм (наприклад, "5m", "15m")
+            if 'm' in tf and 'h' not in tf and 'd' not in tf:
                 minutes = int(re.findall(r'\d+', tf)[0])
-                if minutes < 15:
-                    return False
-            except Exception:
-                return False
-        
-        # Усі інші таймфрейми (1h, 4h, 1d) за замовчуванням дозволені
-        return True
+                return minutes >= 15
+
+            # Усі інші (1h, 4h, 1d) — дозволені
+            return True
+        except Exception as e:
+            logger.error(f"Помилка визначення таймфрейму {timeframe}: {e}")
+            return True # У разі невідомого формату краще пропустити сигнал, ніж загубити
+
 
     def send_personal_alert(self, data: dict):
         """Форматує та надсилає сигнал в особистий бот."""
