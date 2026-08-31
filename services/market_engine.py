@@ -15,6 +15,8 @@ from services.liquidation_service import liquidation_service
 from services.ai_service import ai_service
 from services.trend_service import trend_service
 from services.risk_service import risk_service
+# 👉 Імпортуємо наш новий сервіс сповіщень
+from services.telegram_alert_service import telegram_alert_service
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +142,7 @@ class MarketEngine:
             # Final Result
             # ==========================
 
-            return {
+            result = {
 
                 "market": market,
 
@@ -160,6 +162,11 @@ class MarketEngine:
 
             }
 
+            # 👉 Автоматичний запуск фільтрації та відправки в особистий бот
+            telegram_alert_service.send_personal_alert(result)
+
+            return result
+
         except Exception as e:
 
             logger.exception("Market Engine Error")
@@ -168,3 +175,4 @@ class MarketEngine:
 
 
 market_engine = MarketEngine()
+
