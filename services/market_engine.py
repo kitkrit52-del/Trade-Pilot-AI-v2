@@ -175,4 +175,6 @@ class MarketEngine:
 
 
 market_engine = MarketEngine()
+# ТИМЧАСОВИЙ ТЕСТ: видаліть або закоментуйте після перевірки
+telegram_alert_service._execute_send("🔔 *Тест зв'язку успішний!* Сервіс сповіщень бачить ваш ID.")
 
