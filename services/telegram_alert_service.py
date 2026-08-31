@@ -79,7 +79,7 @@ class TelegramAlertService:
 # Ініціалізуємо екземпляр сервісу (замініть на власні дані)
 # Токен від @BotFather та ваш ID від @userinfobot
 telegram_alert_service = TelegramAlertService(
-    bot_token="8519856737:AAGFIf7cPIkQNFCnIK1Qr_LWN9PGzw_jbFM",
+    bot_token="ТУТ_ВАШ_ТОКЕН_БОТА",
     user_id=515860664
 )
 
