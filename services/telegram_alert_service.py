@@ -89,5 +89,5 @@ class TelegramAlertService:
 # Ініціалізація (Вкажіть ваші точні дані!)
 telegram_alert_service = TelegramAlertService(
     bot_token="СЮДИ_ВАШ_ТОКЕН_З_BOTFATHER",
-    user_id=515860664
+    user_id=8519856737
 )
